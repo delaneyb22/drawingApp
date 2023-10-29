@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="drawingCanvas" width="400" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("drawingCanvas") as HTMLCanvasElement;
+        const ctx = canvas.getContext("2d");
+
+        class DrawPoint {
+            constructor(public x: number, public y: number) { }
+        }
+
+        const points: DrawPoint[] = [];
+        let isDrawing = false;
+
+        function drawPixel(x: number, y: number) {
+            ctx.fillRect(x, y, 1, 1);
+        }
+
+        function drawLine(x1: number, y1: number, x2: number, y2: number) {
+            const dx = Math.abs(x2 - x1);
+            const dy = Math.abs(y2 - y1);
+            const sx = (x1 < x2) ? 1 : -1;
+            const sy = (y1 < y2) ? 1 : -1;
+            let err = dx - dy;
+
+            while (true) {
+                drawPixel(x1, y1);
+                if (x1 === x2 && y1 === y2) break;
+                const e2 = 2 * err;
+                if (e2 > -dy) { err -= dy; x1 += sx; }
+                if (e2 < dx) { err += dx; y1 += sy; }
+            }
+        }
+
+        function handleDrawStart(event: MouseEvent) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            points.push(new DrawPoint(x, y));
+        }
+
+        function handleDrawMove(event: MouseEvent) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            points.push(new DrawPoint(x, y));
+            const prevPoint = points[points.length - 2];
+            const currentPoint = points[points.length - 1];
+            drawLine(prevPoint.x, prevPoint.y, currentPoint.x, currentPoint.y);
+        }
+
+        function handleDrawEnd() {
+            isDrawing = false;
+        }
+
+        canvas.addEventListener("mousedown", handleDrawStart);
+        canvas.addEventListener("mousemove", handleDrawMove);
+        canvas.addEventListener("mouseup", handleDrawEnd);
+
+        async function simulateAsyncWork() {
+            return new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    console.log("Async work done.");
+                    resolve();
+                }, 1000);
+            });
+        }
+
+        async function main() {
+            console.log("Drawing Application started.");
+            await simulateAsyncWork();
+            console.log("Drawing Application finished.");
+        }
+
+        main();
+    </script>
+</body>
+</html>
